@@ -51,7 +51,13 @@ var REGISTERED_PEOPLE = [
   { name: 'Тимур', city: 'Астана' },
   { name: 'Ақбота', city: 'Астана' }
 ];
-var REG_PUSH_PAUSES_SEC = [2, 3];   // паузы между уведомлениями по очереди: 2 с, 3 с, 2 с, 3 с…
+var REG_PUSH_PAUSES_SEC = [2, 3];
+
+// 7) Дата ближайшего вебинара на жёлтой плашке («18 қараша · 21:00»). Меняется сама каждый день:
+//    до 21:00 по Алматы показывается сегодняшняя дата, после 21:00 — завтрашняя.
+//    FIRST_WEBINAR — самый первый вебинар: раньше этой даты не показывается.
+var FIRST_WEBINAR = '2026-11-18';
+var WEBINAR_HOUR = 21;   // паузы между уведомлениями по очереди: 2 с, 3 с, 2 с, 3 с…
 
 // 3) ID Meta Pixel (только цифры). Пусто = пиксель выключен.
 var PIXEL_ID = '';
@@ -588,7 +594,7 @@ if (PIXEL_ID) {
     <div class="badge"><i></i>ТЕГІН ОНЛАЙН САБАҚ</div>
     <div class="badge time">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-      21:00
+      <span id="webDate"></span>21:00
     </div>
   </div>
 
@@ -849,6 +855,19 @@ if (PIXEL_ID) {
   } else {
     shownReg = REGISTERED_PEOPLE.length;
   }
+
+  /* ---------- Дата ближайшего вебинара (время Алматы, UTC+5) ---------- */
+  (function () {
+    var MONTHS = ['қаңтар', 'ақпан', 'наурыз', 'сәуір', 'мамыр', 'маусым',
+                  'шілде', 'тамыз', 'қыркүйек', 'қазан', 'қараша', 'желтоқсан'];
+    var almaty = new Date(Date.now() + 5 * 3600 * 1000);          // часы UTC этой даты = время в Алматы
+    var day = Date.UTC(almaty.getUTCFullYear(), almaty.getUTCMonth(), almaty.getUTCDate());
+    if (almaty.getUTCHours() >= WEBINAR_HOUR) day += 24 * 3600 * 1000;   // сегодняшний уже начался — завтра
+    var first = Date.parse(FIRST_WEBINAR + 'T00:00:00Z');
+    if (first > day) day = first;
+    var d = new Date(day);
+    document.getElementById('webDate').textContent = d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' · ';
+  })();
 
   /* ---------- Голос Самата: кнопка Play ---------- */
   (function () {
