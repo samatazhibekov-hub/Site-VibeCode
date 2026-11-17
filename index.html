@@ -48,7 +48,7 @@ var REGISTERED_PEOPLE = [
   { name: '[Аты 9]',  city: '[Қала]' },
   { name: '[Аты 10]', city: '[Қала]' }
 ];
-var REG_PUSH_EVERY_SEC = 1.5;   // раз во сколько секунд показывать следующее имя
+var REG_PUSH_PAUSES_SEC = [2, 3];   // паузы между уведомлениями по очереди: 2 с, 3 с, 2 с, 3 с…
 
 // 3) ID Meta Pixel (только цифры). Пусто = пиксель выключен.
 var PIXEL_ID = '';
@@ -459,20 +459,31 @@ if (PIXEL_ID) {
   .face .mouth {              /* открытый рот: тёмная полость под верхней губой */
     position: absolute;
     left: 44.8%; top: 18.3%;
-    width: 7%;
+    width: 6.6%;
     height: 0;
-    margin-left: -3.5%;
-    border-radius: 42% 42% 50% 50% / 22% 22% 78% 78%;
-    background: #33110f;
+    margin-left: -3.3%;
+    border-radius: 40% 40% 50% 50% / 20% 20% 80% 80%;
+    background: radial-gradient(ellipse at 50% 30%, #1d0908 0%, #2c100e 55%, #45201c 100%);
+    box-shadow: inset 0 1px 1.5px rgba(0,0,0,.55);       /* тень от верхней губы */
     overflow: hidden;
   }
-  .face .mouth::before {      /* верхние зубы — видны, когда рот открыт пошире */
+  .face .mouth::before {      /* верхние зубы: в тени губы, сероватые, без чистого белого */
     content: "";
     position: absolute;
-    left: 14%; right: 14%; top: 0;
-    height: 34%;
-    border-radius: 0 0 45% 45%;
-    background: #f1e8de;
+    left: 20%; right: 20%; top: 0;
+    height: 27%;
+    border-radius: 0 0 38% 38% / 0 0 70% 70%;
+    background: linear-gradient(180deg, #8f7f76 0%, #b9aca2 45%, #a89a90 100%);
+    opacity: .78;
+  }
+  .face .mouth::after {       /* язык в глубине рта */
+    content: "";
+    position: absolute;
+    left: 22%; right: 22%; bottom: -12%;
+    height: 42%;
+    border-radius: 50% 50% 40% 40%;
+    background: radial-gradient(ellipse at 50% 20%, #7c4541 0%, #5a2b28 70%);
+    opacity: .7;
   }
   .hero .face img {           /* копия фото, обрезанная по шву между губами: нижняя губа и подбородок */
     position: absolute;
@@ -827,39 +838,33 @@ if (PIXEL_ID) {
   });
 
   /* ---------- Уведомления: кто уже вступил в группу ----------
-     Каждое новое имя из списка прибавляет единицу к счётчику на кнопке. Когда показаны все,
-     счётчик равен REGISTERED_COUNT и больше не растёт: имена идут по кругу, число стоит. */
-  var shownReg = 0;                     // сколько человек из списка уже показано этому посетителю
-  var REG_KEY = 'reg_push_idx_v1';
-  try {
-    var savedReg = JSON.parse(localStorage.getItem(REG_KEY));
-    if (savedReg && Date.now() - savedReg.ts < 12 * 60 * 60 * 1000) shownReg = Math.min(savedReg.idx, REGISTERED_PEOPLE.length);
-  } catch (e) {}
-  if (REGISTERED_PEOPLE.length && REG_PUSH_EVERY_SEC > 0) {
+     Каждое уведомление прибавляет единицу к числу на кнопке — они всегда идут вместе.
+     Список показывается один раз за открытие страницы: когда имена кончились, уведомления
+     прекращаются, а число равно REGISTERED_COUNT. Чем длиннее список реальных людей,
+     тем дольше идёт показ. */
+  var shownReg = 0;                     // сколько человек из списка уже показано
+  if (REGISTERED_PEOPLE.length && REG_PUSH_PAUSES_SEC.length) {
     var waToast = document.getElementById('waToast');
-    var regIdx = shownReg;
     var WA_GLYPH = '<svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.600 15.100L2 22l5-1.300A10 10 0 1 0 12 2zm4.500 12.050c-.250-.120-1.460-.720-1.690-.800-.230-.080-.390-.120-.560.120-.160.250-.640.800-.780.970-.140.160-.290.180-.530.060a6.700 6.700 0 0 1-1.980-1.220 7.400 7.400 0 0 1-1.370-1.700c-.140-.250-.020-.380.110-.500.110-.110.250-.290.370-.430.120-.140.160-.250.250-.410.080-.160.040-.310-.020-.430-.060-.120-.560-1.340-.760-1.840-.200-.480-.410-.420-.560-.420h-.480a.920.920 0 0 0-.660.310 2.800 2.800 0 0 0-.870 2.070c0 1.220.890 2.400 1.010 2.560.120.160 1.750 2.670 4.230 3.740.590.260 1.050.410 1.410.520.590.190 1.130.160 1.560.100.480-.070 1.460-.600 1.670-1.170.200-.580.200-1.070.140-1.170-.060-.110-.220-.170-.470-.290z"/></svg>';
     var escReg = function (t) {
       return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
     };
     var regNext = function () {
-      var p = REGISTERED_PEOPLE[regIdx % REGISTERED_PEOPLE.length];
-      if (regIdx < REGISTERED_PEOPLE.length) {       // новое имя — счётчик на кнопке +1
-        shownReg = regIdx + 1;
-        try { localStorage.setItem(REG_KEY, JSON.stringify({ idx: shownReg, ts: Date.now() })); } catch (e) {}
-        paintCrowd();
-      }
-      regIdx++;
+      if (shownReg >= REGISTERED_PEOPLE.length) return;      // все показаны — дальше тишина
+      var p = REGISTERED_PEOPLE[shownReg];
+      var pause = Number(REG_PUSH_PAUSES_SEC[shownReg % REG_PUSH_PAUSES_SEC.length]) || 2;
+      shownReg++;
+      paintCrowd();                                          // число на кнопке +1 вместе с уведомлением
       waToast.innerHTML =
         '<div class="ico">' + WA_GLYPH + '</div>' +
         '<div><div class="top"><span>WhatsApp</span></div>' +
         '<b>' + escReg(p.name) + (p.city ? ', ' + escReg(p.city) : '') + '</b>' +
         '<span class="msg">топқа қосылды</span></div>';
       waToast.classList.add('show');
-      setTimeout(function () { waToast.classList.remove('show'); }, REG_PUSH_EVERY_SEC * 1000 * 0.72);
+      setTimeout(function () { waToast.classList.remove('show'); }, Math.min(1700, pause * 1000 * 0.75));
+      setTimeout(regNext, pause * 1000);
     };
-    setTimeout(regNext, 1200);
-    setInterval(regNext, REG_PUSH_EVERY_SEC * 1000);
+    setTimeout(regNext, 1500);
   } else {
     shownReg = REGISTERED_PEOPLE.length;
   }
