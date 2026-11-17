@@ -79,7 +79,7 @@ var TARIFFS = [
     ],
     gifts: [
       'Дайын промпттар жинағы',
-      'Алғашқы тапсырысты табу нұсқаулығы'
+      'Жеке ассистент құру сабағы'
     ],
     oldPrice: '600 000 ₸',
     price: '390 000 ₸',
@@ -101,7 +101,7 @@ var TARIFFS = [
     ],
     gifts: [
       'Дайын промпттар жинағы',
-      'Клиент табу және баға қою сабағы'
+      'Жеке ассистент құру сабағы'
     ],
     oldPrice: '1 300 000 ₸',
     price: '790 000 ₸',
@@ -149,7 +149,7 @@ var VOICES = [];
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
   :root {
@@ -169,7 +169,7 @@ var VOICES = [];
     min-height: 100vh;
     background: linear-gradient(180deg, #ffffff 0%, var(--bg) 30%, #e6e9ed 100%);
     color: var(--ink);
-    font-family: Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: Onest, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     letter-spacing: -.01em;
     display: flex;
     justify-content: center;
@@ -584,10 +584,10 @@ var VOICES = [];
   /* =========================================================================
      Шрифты и компактный первый экран (16.11.2026): кнопка «Орын аламын»
      должна быть видна сразу при открытии страницы на телефоне.
-     Заголовки, названия тарифов, цены и кнопки — Unbounded, текст — Manrope.
+     Заголовки, названия тарифов, цены и кнопки — Montserrat, текст — Onest.
      ========================================================================= */
   h1, .name, .price strong, .timer b, .btn, .reviews h2, .voices h2, .laptop b {
-    font-family: Unbounded, Manrope, sans-serif;
+    font-family: Montserrat, Onest, sans-serif;
   }
   body { padding-top: 12px; }
   h1 { font-size: clamp(17px, 5vw, 21px); line-height: 1.25; font-weight: 800; letter-spacing: -.02em; }
@@ -659,7 +659,7 @@ var VOICES = [];
     border-radius: 999px;
     background: var(--yellow);
     color: #17191c;
-    font-family: Unbounded, Manrope, sans-serif;
+    font-family: Montserrat, Onest, sans-serif;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: .16em;
@@ -680,7 +680,7 @@ var VOICES = [];
     border-radius: 14px;
     background: rgba(23,25,28,.86);
     color: #fff;
-    font-family: Manrope, sans-serif;
+    font-family: Onest, sans-serif;
     box-shadow: 0 8px 22px rgba(0,0,0,.3);
   }
   .dsw span { font-size: 8.5px; font-weight: 700; letter-spacing: .04em; opacity: .7; }
@@ -690,7 +690,7 @@ var VOICES = [];
     border: 0; border-radius: 50%;
     background: rgba(255,255,255,.14);
     color: #fff;
-    font: 700 13px Manrope, sans-serif;
+    font: 700 13px Onest, sans-serif;
     cursor: pointer;
   }
   .dsw button.on { background: #22c55e; }
@@ -1063,14 +1063,16 @@ var VOICES = [];
   for (var q = 0; q < idx; q++) shown[BUYERS[q].tariff] = (shown[BUYERS[q].tariff] || 0) + 1;
   paintAll();
 
-  if (BUYERS.length && PUSH_EVERY_SEC > 0) {
+  if (idx < BUYERS.length && PUSH_EVERY_SEC > 0) {
     var toast = document.getElementById('toast');
+    var pushTimer = null;
     var showNext = function () {
-      var b = BUYERS[idx % BUYERS.length];
-      if (idx < BUYERS.length) {        // новые покупатели уменьшают остаток, повторный показ — нет
-        shown[b.tariff] = (shown[b.tariff] || 0) + 1;
-        for (var i = 0; i < TARIFFS.length; i++) if (TARIFFS[i].name === b.tariff) paint(i);
-      }
+      // Каждое уведомление = минус одно место у тарифа покупателя.
+      // Когда настоящие покупатели закончились — уведомления прекращаются (по кругу не идут).
+      if (idx >= BUYERS.length) { clearInterval(pushTimer); return; }
+      var b = BUYERS[idx];
+      shown[b.tariff] = (shown[b.tariff] || 0) + 1;
+      for (var i = 0; i < TARIFFS.length; i++) if (TARIFFS[i].name === b.tariff) paint(i);
       idx++;
       try { localStorage.setItem(PUSH_KEY, JSON.stringify({ idx: Math.min(idx, BUYERS.length), ts: Date.now() })); } catch (e) {}
       toast.innerHTML =
@@ -1079,8 +1081,7 @@ var VOICES = [];
       toast.classList.add('show');
       setTimeout(function () { toast.classList.remove('show'); }, Math.min(3500, PUSH_EVERY_SEC * 700));
     };
-    setTimeout(showNext, 2000);
-    setInterval(showNext, PUSH_EVERY_SEC * 1000);
+    setTimeout(function () { showNext(); pushTimer = setInterval(showNext, PUSH_EVERY_SEC * 1000); }, 2000);
   }
 
   /* ---------- Таймер: TIMER_MINUTES, по окончании начинается заново ---------- */
