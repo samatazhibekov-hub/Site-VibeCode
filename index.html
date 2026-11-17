@@ -30,23 +30,26 @@ var SCRIPT_URL = '';
 var REGISTERED_COUNT = 892;
 var CAPACITY = 1000;
 
-// 5) Голосовое обращение Самата: кнопка Play слева от фото, во время записи у фото двигается рот.
+// 5) Голосовое обращение Самата: кнопка Play слева от фото, просто проигрывает запись (фото не двигается).
 //    Файл лежит рядом с этой страницей. Пусто = кнопки нет.
 var VOICE_AUDIO = 'samat-voice.m4a';
 
 // 6) Уже зарегистрировавшиеся — всплывают по одному рядом с фото.
 //    Вписывать только реальных людей. Пустой список [] = уведомлений нет.
 var REGISTERED_PEOPLE = [
-  { name: '[Аты 1]',  city: '[Қала]' },
-  { name: '[Аты 2]',  city: '[Қала]' },
-  { name: '[Аты 3]',  city: '[Қала]' },
-  { name: '[Аты 4]',  city: '[Қала]' },
-  { name: '[Аты 5]',  city: '[Қала]' },
-  { name: '[Аты 6]',  city: '[Қала]' },
-  { name: '[Аты 7]',  city: '[Қала]' },
-  { name: '[Аты 8]',  city: '[Қала]' },
-  { name: '[Аты 9]',  city: '[Қала]' },
-  { name: '[Аты 10]', city: '[Қала]' }
+  { name: 'Азамат', city: 'Алматы' },
+  { name: 'Дидар', city: 'Астана' },
+  { name: 'Досбол', city: 'Алматы' },
+  { name: 'Ақтоты', city: 'Астана' },
+  { name: 'Әсем', city: 'Талдықорған' },
+  { name: 'Еркін', city: 'Қызылорда' },
+  { name: 'Әділет', city: 'Ақтау' },
+  { name: 'Асхат', city: 'Шымкент' },
+  { name: 'Нұрбол', city: 'Шымкент' },
+  { name: 'Ерасыл', city: 'Алматы' },
+  { name: 'Серік', city: 'Алматы' },
+  { name: 'Тимур', city: 'Астана' },
+  { name: 'Ақбота', city: 'Астана' }
 ];
 var REG_PUSH_PAUSES_SEC = [2, 3];   // паузы между уведомлениями по очереди: 2 с, 3 с, 2 с, 3 с…
 
@@ -447,54 +450,6 @@ if (PIXEL_ID) {
   /* Блок с фото не должен прокручиваться внутри себя (кнопка Play при нажатии сдвигала фото вверх) */
   .hero { overflow: clip; }
 
-  /* --- «Говорящее» фото: нижняя челюсть двигается в такт записи --- */
-  .face {
-    position: absolute;
-    left: 50%; top: 0;
-    height: 122%;
-    aspect-ratio: 717 / 1100;
-    transform: translateX(-50%);
-    pointer-events: none;
-  }
-  .face .mouth {              /* открытый рот: тёмная полость под верхней губой */
-    position: absolute;
-    left: 44.8%; top: 18.3%;
-    width: 6.6%;
-    height: 0;
-    margin-left: -3.3%;
-    border-radius: 40% 40% 50% 50% / 20% 20% 80% 80%;
-    background: radial-gradient(ellipse at 50% 30%, #1d0908 0%, #2c100e 55%, #45201c 100%);
-    box-shadow: inset 0 1px 1.5px rgba(0,0,0,.55);       /* тень от верхней губы */
-    overflow: hidden;
-  }
-  .face .mouth::before {      /* верхние зубы: в тени губы, сероватые, без чистого белого */
-    content: "";
-    position: absolute;
-    left: 20%; right: 20%; top: 0;
-    height: 27%;
-    border-radius: 0 0 38% 38% / 0 0 70% 70%;
-    background: linear-gradient(180deg, #8f7f76 0%, #b9aca2 45%, #a89a90 100%);
-    opacity: .78;
-  }
-  .face .mouth::after {       /* язык в глубине рта */
-    content: "";
-    position: absolute;
-    left: 22%; right: 22%; bottom: -12%;
-    height: 42%;
-    border-radius: 50% 50% 40% 40%;
-    background: radial-gradient(ellipse at 50% 20%, #7c4541 0%, #5a2b28 70%);
-    opacity: .7;
-  }
-  .hero .face img {           /* копия фото, обрезанная по шву между губами: нижняя губа и подбородок */
-    position: absolute;
-    left: 0; top: 0; bottom: auto;
-    width: 100%; height: 100%;
-    transform: none;
-    clip-path: polygon(38.2% 18.7%, 40.3% 18.5%, 42.2% 18.38%, 44.8% 18.36%, 47.2% 18.38%, 49.2% 18.6%, 51.4% 19%,
-                       53.2% 21%, 51.6% 24.3%, 47.6% 25.7%, 41.8% 25.7%, 37.8% 24.3%, 36% 21%);
-    will-change: transform;
-  }
-
   /* --- Кнопка Play с голосом Самата --- */
   .playbtn {
     position: absolute;
@@ -840,7 +795,7 @@ if (PIXEL_ID) {
   /* ---------- Уведомления: кто уже вступил в группу ----------
      Каждое уведомление прибавляет единицу к числу на кнопке — они всегда идут вместе.
      Список показывается один раз за открытие страницы: когда имена кончились, уведомления
-     прекращаются, а число равно REGISTERED_COUNT. Чем длиннее список реальных людей,
+     прекращаются, а число = REGISTERED_COUNT + длина списка. Чем длиннее список реальных людей,
      тем дольше идёт показ. */
   var shownReg = 0;                     // сколько человек из списка уже показано
   if (REGISTERED_PEOPLE.length && REG_PUSH_PAUSES_SEC.length) {
@@ -869,13 +824,12 @@ if (PIXEL_ID) {
     shownReg = REGISTERED_PEOPLE.length;
   }
 
-  /* ---------- Голос Самата: кнопка Play и движение рта ---------- */
+  /* ---------- Голос Самата: кнопка Play ---------- */
   (function () {
     var heroBox = document.getElementById('hero');
     heroBox.addEventListener('scroll', function () { heroBox.scrollTop = 0; heroBox.scrollLeft = 0; });
     var playBtn = document.getElementById('playBtn');
     var playCap = document.getElementById('playCap');
-    var photo = document.getElementById('photo');
     if (!VOICE_AUDIO || !playBtn) return;
 
     var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5.1v13.8a.8.8 0 0 0 1.2.7l10.6-6.9a.8.8 0 0 0 0-1.4L9.2 4.4A.8.8 0 0 0 8 5.1z"/></svg>';
@@ -888,93 +842,23 @@ if (PIXEL_ID) {
       playBtn.hidden = false; playCap.hidden = false;
     });
 
-    // Слой «лицо»: тёмная щель рта и копия фото, обрезанная по челюсти
-    var face = null, mouth = null, jaw = null;
-    var buildFace = function () {
-      if (face || !photo || !photo.isConnected || !photo.classList.contains('cut')) return;
-      face = document.createElement('div');
-      face.className = 'face';
-      face.innerHTML = '<div class="mouth"></div><img alt="" src="' + photo.currentSrc + '">';
-      photo.insertAdjacentElement('afterend', face);
-      mouth = face.querySelector('.mouth');
-      jaw = face.querySelector('img');
-    };
-    var setMouth = function (open) {               // open: 0 — закрыт, 1 — открыт максимально
-      if (!face) return;
-      var px = open * face.offsetHeight * 0.012;   // ход челюсти: до ~1,2% высоты фото
-      jaw.style.transform = 'translateY(' + px.toFixed(2) + 'px)';
-      mouth.style.height = (px * 1.15).toFixed(2) + 'px';
-    };
-
-    // Громкость записи по времени → насколько открыт рот.
-    // Запись заранее разбирается на «кривую громкости» (50 значений в секунду). Сам звук идёт
-    // обычным плеером, поэтому он играет, даже если разбор не удался, — тогда рот двигается равномерно.
-    var ENV_RATE = 50, env = null, raf = 0, level = 0;
-    var loadEnvelope = function () {
-      if (env !== null) return;
-      env = false;                                   // false = идёт загрузка или не получилось
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC || !window.fetch) return;
-      fetch(VOICE_AUDIO)
-        .then(function (r) { return r.arrayBuffer(); })
-        .then(function (data) {
-          var ctx = new AC();
-          return new Promise(function (ok, fail) { ctx.decodeAudioData(data, ok, fail); })
-            .then(function (decoded) { if (ctx.close) ctx.close(); return decoded; });
-        })
-        .then(function (decoded) {
-          var ch = decoded.getChannelData(0);
-          var step = Math.floor(decoded.sampleRate / ENV_RATE);
-          var out = [], sorted;
-          for (var i = 0; i + step <= ch.length; i += step) {
-            var sum = 0;
-            for (var j = i; j < i + step; j += 4) sum += ch[j] * ch[j];
-            out.push(Math.sqrt(sum / (step / 4)));
-          }
-          sorted = out.slice().sort(function (x, y) { return x - y; });
-          var top = sorted[Math.floor(sorted.length * 0.95)] || 1;     // «громко» для этой записи
-          env = out.map(function (v) { return Math.min(1, Math.max(0, (v / top - 0.12) * 1.25)); });
-        })
-        .catch(function () { env = false; });
-    };
-    var lastT = -1, lastMove = 0;
-    var loop = function () {
-      var target, now = Date.now();
-      if (audio.currentTime !== lastT) { lastT = audio.currentTime; lastMove = now; }
-      if (now - lastMove > 250) {                    // звук завис (буферизация) — рот закрыт
-        target = 0;
-      } else if (env && env.length) {
-        target = env[Math.min(env.length - 1, Math.floor(audio.currentTime * ENV_RATE))] || 0;
-      } else {                                      // запасной вариант без кривой громкости
-        target = 0.45 + 0.45 * Math.sin(Date.now() / 75);
-      }
-      level += (target - level) * (target > level ? 0.65 : 0.35);  // быстро открывается, мягче закрывается
-      setMouth(level);
-      if (!audio.paused) raf = requestAnimationFrame(loop);
-    };
-
     audio.addEventListener('play', function () {
       playBtn.innerHTML = ICON_PAUSE; playBtn.classList.add('on');
       playCap.hidden = true;
-      cancelAnimationFrame(raf); loop();
     });
     var stop = function () {
       playBtn.innerHTML = ICON_PLAY; playBtn.classList.remove('on');
-      cancelAnimationFrame(raf); level = 0; setMouth(0);
     };
     audio.addEventListener('pause', stop);
     audio.addEventListener('ended', function () { audio.currentTime = 0; stop(); });
 
     playBtn.addEventListener('click', function () {
       if (audio.paused) {
-        buildFace();
-        loadEnvelope();
         var pr = audio.play(); if (pr && pr.catch) pr.catch(function () {});
       } else {
         audio.pause();
       }
     });
-    window.__voiceTest = { audio: audio, level: function () { return level; }, env: function () { return env; } };
   })();
 
   /* ---------- Сколько человек уже зарегистрировалось ---------- */
@@ -985,12 +869,12 @@ if (PIXEL_ID) {
     document.getElementById('crowd').hidden = false;
     btn.classList.add('has-crowd');
   }
-  // Число на кнопке = люди в сообществе, ещё не показанные в уведомлениях
-  //                  + уже показанные имена + настоящие заявки из Google-таблицы
+  // Число на кнопке = люди в сообществе (REGISTERED_COUNT) + уже показанные в уведомлениях
+  //                  + настоящие заявки из Google-таблицы
   var sheetCount = 0;
   function paintCrowd() {
     if (REGISTERED_COUNT <= 0) return;
-    showCrowd(REGISTERED_COUNT - REGISTERED_PEOPLE.length + shownReg + sheetCount);
+    showCrowd(REGISTERED_COUNT + shownReg + sheetCount);
   }
   paintCrowd();
   if (SCRIPT_URL) {                       // настоящее число строк в таблице заявок
