@@ -32,7 +32,7 @@ var CAPACITY = 1000;
 
 // 5) Голосовое обращение Самата: кнопка Play слева от фото, просто проигрывает запись (фото не двигается).
 //    Файл лежит рядом с этой страницей. Пусто = кнопки нет.
-var VOICE_AUDIO = 'samat-voice.m4a';
+var VOICE_AUDIO = 'samat-voice.m4a?v=2';   // при замене записи увеличить v, чтобы браузеры не играли старую
 
 // 6) Уже зарегистрировавшиеся — всплывают по одному рядом с фото.
 //    Вписывать только реальных людей. Пустой список [] = уведомлений нет.
@@ -453,7 +453,7 @@ if (PIXEL_ID) {
   /* --- Кнопка Play с голосом Самата --- */
   .playbtn {
     position: absolute;
-    left: 10px; bottom: 62px;
+    left: 26px; bottom: 74px;
     z-index: 3;
     width: 52px; height: 52px;
     padding: 0;
@@ -488,6 +488,25 @@ if (PIXEL_ID) {
     text-align: center;
   }
   @media (prefers-reduced-motion: reduce) { .playbtn::before { animation: none; } }
+
+  /* Крутящаяся надпись вокруг кнопки Play: «толық ақпаратты тыңдау» */
+  .playbtn::before { display: none; }      /* пульсирующее кольцо заменено надписью */
+  .playring {
+    position: absolute;
+    left: 4px; bottom: 52px;               /* центр совпадает с центром кнопки Play */
+    z-index: 2;
+    width: 96px; height: 96px;
+    pointer-events: none;
+  }
+  .playring svg { display: block; width: 100%; height: 100%; animation: spin 12s linear infinite; }
+  .playring .band { fill: none; stroke: rgba(255,253,248,.93); stroke-width: 17; }
+  .playring text {
+    font: 800 10.5px Montserrat, Onest, sans-serif;
+    fill: var(--green-dark);
+    text-transform: uppercase;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .playring svg { animation: none; } }
 
   /* --- Уведомление снизу экрана в стиле WhatsApp: «… топқа қосылды» --- */
   .watoast {
@@ -612,6 +631,13 @@ if (PIXEL_ID) {
 
     <button class="playbtn" id="playBtn" type="button" aria-label="Саматтың сөзін тыңдау" hidden></button>
     <div class="playcap" id="playCap" hidden>Тыңдаңыз</div>
+    <div class="playring" id="playRing" hidden aria-hidden="true">
+      <svg viewBox="0 0 100 100">
+        <defs><path id="ringPath" d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0"/></defs>
+        <circle class="band" cx="50" cy="50" r="40"/>
+        <text dy="3.7"><textPath href="#ringPath" textLength="246" lengthAdjust="spacing">Толық ақпаратты тыңдау •&#160;</textPath></text>
+      </svg>
+    </div>
 
     <div class="who">
       <strong>Самат Ажибеков</strong>
@@ -839,7 +865,8 @@ if (PIXEL_ID) {
     audio.src = VOICE_AUDIO;
     audio.addEventListener('loadedmetadata', function () {     // кнопка появляется, только если запись есть
       playBtn.innerHTML = ICON_PLAY;
-      playBtn.hidden = false; playCap.hidden = false;
+      playBtn.hidden = false;
+      document.getElementById('playRing').hidden = false;   // вместо подписи «Тыңдаңыз» — крутящаяся надпись
     });
 
     audio.addEventListener('play', function () {
